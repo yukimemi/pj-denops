@@ -1,0 +1,16 @@
+# Denops-layer action version pins. Merged into the consumer's
+# `.kata/vars.toml` via `[[file]] how = "merge-toml"`, composing
+# with pj-base's universal pins (actions/checkout,
+# peter-evans/create-pull-request, anthropics/claude-code-action).
+#
+# Each `# renovate:` annotation tells Renovate which datasource and
+# upstream repo the value tracks; Renovate bumps these via the
+# customManager declared in pj-base's `default.json`. Bumps land in
+# this template repo's source file and in each consumer's
+# `.kata/vars.toml` independently.
+
+[actions]
+# renovate: datasource=github-tags depName=denoland/setup-deno
+deno_setup = "v2"
+# renovate: datasource=github-tags depName=pascalgn/automerge-action
+automerge_action = "v0.16.4"

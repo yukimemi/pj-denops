@@ -1,0 +1,61 @@
+name = "pj-denops"
+version = "0.1.0"
+
+# Denops plugin layer. Brings the CI matrix (3 OS x deno stable),
+# the automerge pipeline for Renovate PRs, and the Deno formatting
+# policy every Denops plugin using these templates shares.
+# Compose under `pj-base`.
+
+# Variables: deno-specific action pins merged into the consumer's
+# `.kata/vars.toml` on first apply. `when = "once"` so the consumer
+# owns these pins after seeding — Renovate bumps them in-place.
+# `paths` limits merge to denops-specific keys, leaving pj-base's
+# universal pins (checkout, create_pull_request, claude_code_action)
+# untouched.
+[[file]]
+src = "vars.denops.toml"
+dst = ".kata/vars.toml"
+how = "merge-toml"
+when = "once"
+paths = ["actions.deno_setup", "actions.automerge_action"]
+
+# CI workflow. Same `.tera` suffix story as pj-nvim's ci.yml.tera:
+# (1) GitHub Actions only runs `.yml`/`.yaml` under
+# `.github/workflows/`, so the suffixed source isn't executed inside
+# pj-denops itself; (2) kata Tera-renders `.tera` files at apply time
+# and strips the suffix, so consumers receive `ci.yml`.
+#
+# Action versions reference `vars.actions.checkout` (from pj-base)
+# and `vars.actions.deno_setup` (from vars.denops.toml), all pinned
+# in `.kata/vars.toml` and bumped by Renovate's customManager.
+[[file]]
+src = ".github/workflows/ci.yml.tera"
+dst = ".github/workflows/ci.yml"
+how = "overwrite"
+when = "always"
+
+# Automerge pipeline for Renovate PRs. Uses `pascalgn/automerge-action`
+# which merges PRs carrying the `automerge` label — consistent with
+# the `deno.yml` scheduled-update workflow that labels its import-bump
+# PRs identically. Renovate PRs receive the label via pj-base's
+# `labels: ["automerge"]` + `platformAutomerge: true` config.
+#
+# `when = "once"`: after the first seed, the consumer owns this file
+# and Renovate bumps the action versions directly. A `when = "always"`
+# overwrite would revert Renovate bumps on every apply.
+[[file]]
+src = ".github/workflows/automerge.yml"
+dst = ".github/workflows/automerge.yml"
+how = "overwrite"
+when = "once"
+
+# Denops-layer agent guidance — test/lint commands, Deno/Denops
+# conventions, and kata-managed-file notes. Lives inside its own
+# marker block so pj-base's language-agnostic block can coexist in
+# the same AGENTS.md.
+[[file]]
+src = "AGENTS.md.denops"
+dst = "AGENTS.md"
+how = "merge-section"
+when = "always"
+marker = { begin = "<!-- kata:agents:denops:begin -->", end = "<!-- kata:agents:denops:end -->" }

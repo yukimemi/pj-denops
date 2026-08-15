@@ -1,0 +1,36 @@
+### Denops plugin workflow
+
+This repo follows the shared Denops plugin conventions. The
+language-agnostic conventions block above (`kata:agents:base:*`)
+covers git workflow, PR review cycle, and worktree usage.
+
+### Test / lint / format
+
+Tests and lint run through Deno itself:
+
+```sh
+deno task ci       # full CI gate (type-check + lint + fmt-check + test)
+deno task check    # type-check only
+deno task fmt      # format code
+deno task lint     # lint
+deno task test     # test
+```
+
+Deno's built-in formatter (not prettier, not dprint) is the
+authoritative formatter. Run `deno fmt` before committing; CI
+enforces `deno fmt --check`.
+
+### CI workflow
+
+`.github/workflows/ci.yml` is kata-managed. The source lives in
+`yukimemi/pj-denops/.github/workflows/ci.yml.tera`. Action versions
+are pinned in `.kata/vars.toml` and bumped by Renovate — do not edit
+them inline in the workflow; the bump would be clobbered on the next
+`kata apply`.
+
+### autogmerge
+
+`.github/workflows/automerge.yml` is seeded by kata on first apply
+and consumer-owned afterward. Renovate bumps action versions
+directly in this file. PRs with the `automerge` label are merged
+automatically when CI passes.
