@@ -14,3 +14,18 @@
 deno_setup = "v2"
 # renovate: datasource=github-tags depName=pascalgn/automerge-action
 automerge_action = "v0.16.4"
+# renovate: datasource=github-tags depName=rhysd/action-setup-vim
+rhysd_action_setup_vim = "v1"
+# renovate: datasource=github-tags depName=thinca/action-setup-vim
+thinca_action_setup_vim = "v3"
+
+[denops]
+# Editor versions the CI matrix installs. `@denops/test` spawns REAL
+# vim / nvim binaries, so a denops plugin's suite cannot run without
+# them — this is the reason the denops layer ships its own CI matrix
+# instead of reusing a plain "setup-deno + deno task ci" workflow.
+#
+# renovate: datasource=github-releases depName=vim/vim-win32-installer
+vim_version = "v9.2.0148"
+# renovate: datasource=github-releases depName=neovim/neovim
+nvim_version = "v0.12.4"

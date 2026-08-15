@@ -17,7 +17,14 @@ src = "vars.denops.toml"
 dst = ".kata/vars.toml"
 how = "merge-toml"
 when = "once"
-paths = ["actions.deno_setup", "actions.automerge_action"]
+paths = [
+  "actions.deno_setup",
+  "actions.automerge_action",
+  "actions.rhysd_action_setup_vim",
+  "actions.thinca_action_setup_vim",
+  "denops.vim_version",
+  "denops.nvim_version",
+]
 
 # CI workflow. Same `.tera` suffix story as pj-nvim's ci.yml.tera:
 # (1) GitHub Actions only runs `.yml`/`.yaml` under

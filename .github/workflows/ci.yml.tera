@@ -1,5 +1,17 @@
-{#- Resolve action pins from .kata/vars.toml. pj-base seeds
-    `actions.checkout`; pj-denops seeds `actions.deno_setup`. -#}
+{#- Resolve pins from `.kata/vars.toml`. pj-base seeds `actions.checkout`;
+    pj-denops seeds the rest. Every denops-layer lookup goes through a
+    `default(...)` so a consumer whose `.kata/vars.toml` predates a key
+    still renders — kata's Tera render is strict and an undefined variable
+    aborts `kata apply` for every existing consumer.
+
+    GitHub Actions expressions share Tera's `{{ }}` delimiters, so every
+    `${{ … }}` below is wrapped in `{% raw %}` to survive rendering. -#}
+{%- set act = vars.actions -%}
+{%- set dn = vars.denops | default(value={}) -%}
+{%- set vim_setup = act.rhysd_action_setup_vim | default(value="v1") -%}
+{%- set vim_setup_thinca = act.thinca_action_setup_vim | default(value="v3") -%}
+{%- set vim_version = dn.vim_version | default(value="v9.2.0148") -%}
+{%- set nvim_version = dn.nvim_version | default(value="v0.12.4") -%}
 # kata-managed — source: yukimemi/pj-denops/.github/workflows/ci.yml.tera
 # Local edits are reverted on the next `kata apply`. Push fixes upstream.
 name: CI
@@ -11,16 +23,45 @@ on:
 
 jobs:
   ci:
+    name: {% raw %}ci (${{ matrix.os }}){% endraw %}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: {% raw %}${{ matrix.os }}{% endraw %}
     steps:
-      - uses: actions/checkout@{{ vars.actions.checkout }}
+      - uses: actions/checkout@{{ act.checkout }}
 
-      - uses: denoland/setup-deno@{{ vars.actions.deno_setup }}
+      # Vim. rhysd/action-setup-vim builds from source, which only works
+      # on Linux runners here; thinca/action-setup-vim installs a prebuilt
+      # Vim on macOS / Windows. Both expose the same `executable` output,
+      # coalesced into DENOPS_TEST_VIM_EXECUTABLE below.
+      - uses: rhysd/action-setup-vim@{{ vim_setup }}
+        if: {% raw %}matrix.os == 'ubuntu-latest'{% endraw %}
+        id: vim-rhysd
+        with:
+          version: "{{ vim_version }}"
 
+      - uses: thinca/action-setup-vim@{{ vim_setup_thinca }}
+        if: {% raw %}matrix.os != 'ubuntu-latest'{% endraw %}
+        id: vim-thinca
+        with:
+          vim_type: "Vim"
+          vim_version: "{{ vim_version }}"
+
+      - uses: rhysd/action-setup-vim@{{ vim_setup }}
+        id: nvim
+        with:
+          neovim: true
+          version: "{{ nvim_version }}"
+
+      - uses: denoland/setup-deno@{{ act.deno_setup }}
+
+      # `@denops/test` spawns these binaries directly; without the two
+      # env vars every `test({ mode: "vim" | "nvim" })` case fails.
       - name: Run CI
         shell: bash
         run: deno task ci
+        env:
+          DENOPS_TEST_VIM_EXECUTABLE: {% raw %}${{ steps.vim-rhysd.outputs.executable || steps.vim-thinca.outputs.executable }}{% endraw %}
+          DENOPS_TEST_NVIM_EXECUTABLE: {% raw %}${{ steps.nvim.outputs.executable }}{% endraw %}
