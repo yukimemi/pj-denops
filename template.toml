@@ -22,6 +22,7 @@ paths = [
   "actions.automerge_action",
   "actions.rhysd_action_setup_vim",
   "actions.thinca_action_setup_vim",
+  "actions.create_github_app_token",
   "denops.vim_version",
   "denops.nvim_version",
 ]
@@ -38,6 +39,22 @@ paths = [
 [[file]]
 src = ".github/workflows/ci.yml.tera"
 dst = ".github/workflows/ci.yml"
+how = "overwrite"
+when = "always"
+
+# Daily Deno import bump -> rolling auto-PR. Was a per-repo `deno.yml` in
+# every denops plugin, identical except for action-version drift, which is
+# exactly what a template layer removes. `when = "always"` for the same
+# reason as ci.yml: every consumer wants identical behaviour and fixes to
+# the workflow must flow automatically. Consumer-side Renovate scanning of
+# this file is disabled in pj-base's `default.json` so the kata-owned pins
+# in `.kata/vars.toml` stay the single source of truth.
+#
+# Requires an `APP_ID` variable + `PRIVATE_KEY` secret per consumer; the
+# job self-skips when they are absent.
+[[file]]
+src = ".github/workflows/deno-update.yml.tera"
+dst = ".github/workflows/deno-update.yml"
 how = "overwrite"
 when = "always"
 
