@@ -1,10 +1,16 @@
 name = "pj-denops"
 version = "0.1.0"
 
-# Denops plugin layer. Brings the CI matrix (3 OS x deno stable),
-# the automerge pipeline for Renovate PRs, and the Deno formatting
-# policy every Denops plugin using these templates shares.
+# Denops plugin layer. Brings the CI matrix (3 OS, real vim/nvim) and the
+# Deno conventions every Denops plugin using these templates shares.
 # Compose under `pj-base`.
+#
+# Merging is NOT handled here. Renovate opens the dependency PRs and
+# GitHub's native auto-merge lands them once the required check passes —
+# the same model the pj-rust line uses. That needs branch protection with
+# a required status check (`ci (ubuntu-latest)`) plus `allow_auto_merge`
+# on the repo; without a required check GitHub refuses to arm auto-merge
+# because the PR is already mergeable.
 
 # Variables: deno-specific action pins merged into the consumer's
 # `.kata/vars.toml` on first apply. `when = "once"` so the consumer
@@ -19,10 +25,8 @@ how = "merge-toml"
 when = "once"
 paths = [
   "actions.deno_setup",
-  "actions.automerge_action",
   "actions.rhysd_action_setup_vim",
   "actions.thinca_action_setup_vim",
-  "actions.create_github_app_token",
   "denops.vim_version",
   "denops.nvim_version",
 ]
@@ -41,37 +45,6 @@ src = ".github/workflows/ci.yml.tera"
 dst = ".github/workflows/ci.yml"
 how = "overwrite"
 when = "always"
-
-# Daily Deno import bump -> rolling auto-PR. Was a per-repo `deno.yml` in
-# every denops plugin, identical except for action-version drift, which is
-# exactly what a template layer removes. `when = "always"` for the same
-# reason as ci.yml: every consumer wants identical behaviour and fixes to
-# the workflow must flow automatically. Consumer-side Renovate scanning of
-# this file is disabled in pj-base's `default.json` so the kata-owned pins
-# in `.kata/vars.toml` stay the single source of truth.
-#
-# Requires an `APP_ID` variable + `PRIVATE_KEY` secret per consumer; the
-# job self-skips when they are absent.
-[[file]]
-src = ".github/workflows/deno-update.yml.tera"
-dst = ".github/workflows/deno-update.yml"
-how = "overwrite"
-when = "always"
-
-# Automerge pipeline for Renovate PRs. Uses `pascalgn/automerge-action`
-# which merges PRs carrying the `automerge` label — consistent with
-# the `deno.yml` scheduled-update workflow that labels its import-bump
-# PRs identically. Renovate PRs receive the label via pj-base's
-# `labels: ["automerge"]` + `platformAutomerge: true` config.
-#
-# `when = "once"`: after the first seed, the consumer owns this file
-# and Renovate bumps the action versions directly. A `when = "always"`
-# overwrite would revert Renovate bumps on every apply.
-[[file]]
-src = ".github/workflows/automerge.yml"
-dst = ".github/workflows/automerge.yml"
-how = "overwrite"
-when = "once"
 
 # Denops-layer agent guidance — test/lint commands, Deno/Denops
 # conventions, and kata-managed-file notes. Lives inside its own
