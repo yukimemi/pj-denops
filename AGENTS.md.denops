@@ -44,6 +44,13 @@ directly in this file. PRs carrying the `automerge` label are merged
 once their checks pass; the label comes from pj-base's Renovate
 config.
 
+Triggers matter here: the `pull_request` / `check_suite` / `status`
+events are the fast path, but only `schedule` makes
+`pascalgn/automerge-action` list and sweep every open PR. Without the
+scheduled sweep a green PR whose triggering event was missed sits
+unmerged forever. `workflow_dispatch` resolves PRs by the dispatched
+ref, so dispatching from the default branch matches nothing.
+
 It deliberately contains no test step. `pascalgn/automerge-action`
 already waits for the PR's own checks, and a `deno task ci` here would
 run without vim/nvim, fail, and that failure alone would hold the PR
