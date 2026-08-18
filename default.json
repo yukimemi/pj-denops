@@ -1,0 +1,17 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["github>yukimemi/pj-base"],
+  "packageRules": [
+    {
+      "description": "Consumer-side `ci.yml`, rendered by THIS layer from `ci.yml.tera` with `when = \"always\"`. Action bumps happen upstream in pj-denops and flow down via `kata apply`, so a Renovate-driven local bump is reverted on the next apply and re-opened forever. The canonical pins live in `.kata/vars.toml`, which pj-base's customManager scans. Owned here rather than in pj-base because pj-base cannot know a denops layer composes above it — and because `ci.yml` is a name any project may legitimately hand-write.",
+      "matchManagers": ["github-actions"],
+      "matchFileNames": [".github/workflows/ci.yml"],
+      "enabled": false
+    },
+    {
+      "description": "thinca/action-setup-vim publishes a parallel `<version>+src` tag for each release (v3.0.2 AND v3.0.2+src). The `+src` variant is a source-build marker and does NOT contain the compiled `action.js`, so resolving a workflow `uses:` to it fails the job with \"File not found: .../action.js\". The github-tags datasource sorts `+src` highest and would keep picking it, so exclude build-metadata tags outright. Lives here because pj-denops is the only layer whose CI matrix installs real Vim binaries; it sat in pj-base until the layer-ownership cleanup.",
+      "matchDepNames": ["thinca/action-setup-vim"],
+      "allowedVersions": "!/\\+src$/"
+    }
+  ]
+}
